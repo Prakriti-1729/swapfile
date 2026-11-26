@@ -1,5 +1,7 @@
 # SWAPFILE — a debugger's platformer
 
+**▶ Play in your browser: https://prakriti-1729.github.io/swapfile/**
+
 You're a QA debugger attached to **Sunny Meadows**, a platformer from 1998 that never shipped. Its hero, **PIX**, walks on his own and can't be controlled. He has been walking into the same spikes for 28 years. You can't move him. What you can do is **edit the memory of everything around him**.
 
 ## Run it
