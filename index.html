@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SWAPFILE — a debugger's platformer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <div class="hud-l">
+      <span id="hud-act" class="chip">ACT I</span>
+      <span id="hud-level"><b>0x01</b> hello_world.c</span>
+    </div>
+    <div class="hud-c">
+      <span id="hud-state" class="state">■ BREAKPOINT</span>
+      <span id="hud-cycle" class="mono">CYCLE 000000</span>
+      <span id="hud-ram" class="ram"></span>
+      <span id="hud-goals" class="goals"></span>
+      <span id="hud-mode" class="mode hidden">
+        <button data-mode="swap" class="on">SWAP</button><button data-mode="ptr">POINTER</button>
+      </span>
+    </div>
+    <div class="hud-r">
+      <button id="btn-run" title="Run / Pause (Space)">▶ RUN</button>
+      <button id="btn-reset" title="Restart (R)">↺</button>
+      <button id="btn-hint" title="Hint (H)">?</button>
+      <button id="btn-mute" title="Mute (M)">♪</button>
+      <button id="btn-settings" title="Settings">⚙</button>
+      <button id="btn-menu" title="Memory map (Esc)">☰</button>
+    </div>
+  </header>
+
+  <main id="stageWrap">
+    <div id="stage">
+      <canvas id="game"></canvas>
+      <div id="cards"></div>
+      <div id="tip" class="hidden"></div>
+      <div id="toast"></div>
+      <div id="actSplash" class="hidden"></div>
+      <div id="timeline"><canvas id="tl"></canvas></div>
+    </div>
+  </main>
+
+  <footer id="console">
+    <div id="log"></div>
+    <div id="keys">
+      <span><kbd>CLICK</kbd> inspect</span>
+      <span><kbd>SPACE</kbd> run/pause</span>
+      <span><kbd>SHIFT</kbd>/<kbd>RMB</kbd> slow-mo</span>
+      <span><kbd>Z</kbd> hold to rewind</span>
+      <span><kbd>R</kbd> restart</span>
+      <span><kbd>TAB</kbd> swap/pointer</span>
+      <span><kbd>H</kbd> hint</span>
+    </div>
+  </footer>
+
+  <!-- overlays -->
+  <section id="boot" class="overlay"><pre id="bootText"></pre></section>
+
+  <section id="title" class="overlay hidden">
+    <div class="title-wrap">
+      <div class="logo" data-text="SWAPFILE">SWAPFILE</div>
+      <div class="subtitle">a debugger's platformer</div>
+      <div class="tag">PIX has walked into the same spikes since 1998.<br>You can't control him. You can only <em>rewrite the world.</em></div>
+      <nav class="menu">
+        <button id="m-continue">▶ CONTINUE</button>
+        <button id="m-new">NEW SESSION</button>
+        <button id="m-map">MEMORY MAP</button>
+        <button id="m-log">DATA LOG</button>
+        <button id="m-settings">SETTINGS</button>
+      </nav>
+      <div class="progress"><div id="title-bar"></div></div>
+      <div class="foot">SUNNY_MEADOWS.EXE · build 0.3.1 · CORRUPTED · <span id="title-progress"></span></div>
+    </div>
+  </section>
+
+  <section id="select" class="overlay hidden">
+    <div class="panel wide">
+      <div class="panel-h"><span>MEMORY MAP</span><span id="sel-stats"></span><button class="x" data-close>✕</button></div>
+      <div id="selTabs"></div>
+      <div id="selGrid"></div>
+    </div>
+  </section>
+
+  <section id="datalog" class="overlay hidden">
+    <div class="panel">
+      <div class="panel-h"><span>DATA LOG — recovered fragments</span><button class="x" data-close>✕</button></div>
+      <div id="logList"></div>
+    </div>
+  </section>
+
+  <section id="settings" class="overlay hidden">
+    <div class="panel narrow">
+      <div class="panel-h"><span>SETTINGS</span><button class="x" data-close-settings>✕</button></div>
+      <div class="set-body">
+        <label class="set-row"><span>Music volume</span><input type="range" id="set-music" min="0" max="100"></label>
+        <label class="set-row"><span>Sound effects</span><input type="range" id="set-sfx" min="0" max="100"></label>
+        <label class="set-row"><span>CRT scanlines</span><input type="checkbox" id="set-crt"><i></i></label>
+        <label class="set-row"><span>Bloom glow</span><input type="checkbox" id="set-bloom"><i></i></label>
+        <label class="set-row"><span>Screen shake</span><input type="checkbox" id="set-shake"><i></i></label>
+        <label class="set-row"><span>Execution trace preview</span><input type="checkbox" id="set-trace"><i></i></label>
+        <div class="set-note">The trace preview shows where PIX will walk while paused. Turn it off for a purer challenge.</div>
+        <button id="set-reset" class="danger">ERASE ALL PROGRESS</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="win" class="overlay hidden">
+    <div class="panel win">
+      <div class="win-h" data-text="BUILD SUCCEEDED">BUILD SUCCEEDED</div>
+      <div id="winStars" class="stars"></div>
+      <table id="winStats"></table>
+      <div id="winFrag" class="winfrag hidden"></div>
+      <div class="row-btns">
+        <button id="w-next" class="primary">NEXT ▸ <kbd>ENTER</kbd></button>
+        <button id="w-retry">RETRY <kbd>R</kbd></button>
+        <button id="w-map">MAP <kbd>ESC</kbd></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="ending" class="overlay hidden">
+    <div class="ending-wrap"><pre id="endText"></pre><button id="e-done" class="hidden">RETURN TO TITLE</button></div>
+  </section>
+
+  <div id="crt"></div>
+</div>
+
+<script src="js/engine.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/render.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
